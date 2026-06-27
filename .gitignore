@@ -5,6 +5,9 @@ build/
 dist/
 wheels/
 *.egg-info
+*.db
+*.db-shm
+*.db-wal
 
 # Virtual environments
 .venv
