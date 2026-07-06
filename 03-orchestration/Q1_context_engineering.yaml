@@ -1,0 +1,69 @@
+id: rabbit_274011
+namespace: company.team
+inputs:
+  - id: fileUrl
+    type: STRING
+    description: The URL of the file to download
+    required: true
+
+tasks:
+  - id: downloadNycTaxiData
+    type: io.kestra.plugin.core.http.Download
+    uri: "{{ inputs.fileUrl }}"
+    # If the CSV has a specific filename, you can specify it here
+    # saveAs: nyc_taxi_data.csv
+
+  - id: uploadToGCS
+    type: io.kestra.plugin.gcp.gcs.Upload
+    # This will take the URI of the downloaded file from the previous task
+    from: "{{ outputs.downloadNycTaxiData.uri }}"
+    # Replace 'your_bucket_name' and adjust the path as needed
+    to: gs://your_bucket_name/nyc_taxi_data.csv
+
+  - id: loadToBigQuery
+    type: io.kestra.plugin.gcp.bigquery.Load
+    # This will take the URI of the uploaded file from the previous task
+    from: "{{ outputs.uploadToGCS.uri }}"
+    # Replace 'your_project', 'your_dataset', and 'nyc_taxi_data_table' with your BigQuery details
+    destinationTable: your_project.your_dataset.nyc_taxi_data_table
+    format: CSV
+    csvOptions:
+      # Set to true if your CSV has a header row
+      skipLeadingRows: 1
+      # Adjust if your CSV uses a different delimiter (e.g., ';')
+      fieldDelimiter: ","
+    # Set to true if BigQuery should infer the schema
+    autodetect: true
+    # Configure createDisposition and writeDisposition as needed
+    createDisposition: CREATE_IF_NEEDED
+    writeDisposition: WRITE_TRUNCATE
+
+  - id: checkDataQuality
+    type: io.kestra.plugin.soda.Scan
+    configuration:
+      data_source kestra:
+        type: bigquery
+        connection:
+          project_id: your_project
+          dataset: your_dataset
+          account_info_json: |
+            {{ secret('GCP_CREDS') }} # Replace with your GCP credentials secret
+    checks:
+      checks for nyc_taxi_data_table:
+        - row_count > 0 # Example check: ensure the table is not empty
+        # Add more SodaCL checks here based on your data quality requirements
+    requirements:
+      - soda-core-bigquery
+
+errors:
+  - id: sendSlackNotification
+    type: io.kestra.plugin.slack.notifications.SlackExecution
+    url: "{{ secret('SLACK_WEBHOOK') }}" # Replace with your Slack webhook URL secret
+    messageText: "Flow {{ flow.namespace }}.{{ flow.id }} failed! Execution ID: {{ execution.id }}"
+    executionId: "{{ execution.id }}"
+
+triggers:
+  - id: daily_schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 9 * * *"
+    timezone: "Etc/UTC"
