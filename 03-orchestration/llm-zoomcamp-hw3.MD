@@ -251,7 +251,7 @@ English Brevity Agent:
 💡 Tip: Monitor token usage to understand costs and optimize prompts!
 ```
 
-> RESPONSE : 200-400 tokens
+> RESPONSE : 60-100 tokens
 
 ## Question 4: Token usage — long summary
 
