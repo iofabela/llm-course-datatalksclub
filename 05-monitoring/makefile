@@ -1,5 +1,5 @@
 .PHONY: run chat network postgres \
-        query dashboard
+        query dashboard generate_data
 
 run:
 	uv run python assistant.py
@@ -26,3 +26,6 @@ query:
 
 dashboard:
 	uv run streamlit run dashboard.py --server.port 8502
+
+generate_data:
+	uv run python generate_data.py
