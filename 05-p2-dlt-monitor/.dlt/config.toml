@@ -1,0 +1,10 @@
+# put your configuration values here
+
+[runtime]
+log_level="WARNING"  # the system log level of dlt
+# use the dlthub_telemetry setting to enable/disable anonymous usage data reporting, see https://dlthub.com/docs/reference/telemetry
+workspace_id = "362b264b-0840-4166-86d0-ff2f9046ce0f"
+organization_id = "e2e1c7eb-2749-4e40-9069-5b0998adc5a7"
+
+[workspace.settings]
+name = "hw-dlt"
