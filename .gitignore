@@ -13,3 +13,8 @@ wheels/
 .venv
 .env
 models/
+
+#.dtlhub
+secrets.toml
+*.secrets.toml
+05-p2-dlt-monitor/.dlt/secrets.toml

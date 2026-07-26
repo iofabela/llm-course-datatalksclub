@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "dlt[duckdb,hub]>=1.29.0",
+    "fastmcp-slim[server]>=3.4.4",
     "gitsource>=0.0.5",
     "ibis-framework>=12.0.0",
     "importlib-metadata>=9.0.0",

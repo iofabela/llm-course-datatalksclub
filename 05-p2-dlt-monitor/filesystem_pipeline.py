@@ -172,5 +172,29 @@ def save_agent_run(question: str, output: str, dev_mode: bool = False) -> None:
     )
 
 
+@dlt.resource(name="agent_outputs", write_disposition="append")
+def agent_output_resource(question: str, output: str):
+    """The agent's answer as a plain dlt resource — no receiver API needed."""
+    yield {"question": question, "output": output}
+
+
+def save_agent_output(question: str, output: str, dev_mode: bool = False) -> None:
+    """Save a full agent run WITHOUT the receiver API (e.g. on dltHub Runtime).
+
+    Same as `save_agent_run`, but loads `result.output` directly into the
+    `agent_outputs` table instead of POSTing it through the local receiver
+    (which does not exist on a remote runner).
+
+    Args:
+        question: the question asked in `main.py`.
+        output: the agent's answer (`result.output`).
+        dev_mode: opt-in throwaway dataset (`logfire_data_<ts>`).
+    """
+    load(
+        extra_resources=[agent_output_resource(question, output)],
+        dev_mode=dev_mode,
+    )
+
+
 if __name__ == "__main__":
     load()

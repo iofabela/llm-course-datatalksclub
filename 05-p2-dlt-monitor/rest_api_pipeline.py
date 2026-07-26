@@ -56,10 +56,10 @@ def load(full: bool = False, pages: int = 20) -> None:
     print(info)
     print(pipeline.last_trace.last_normalize_info)
 
-# @run.pipeline("agent_traces", trigger=trigger.schedule("0 12 * * *"))
-# def ingest_logs():
-#     """Runtime job: load 20,000 agent logs from /logs into DuckDB."""
-#     load(pages=20)
+@run.pipeline("agent_traces", trigger=trigger.schedule("0 12 * * *"))
+def ingest_logs():
+    """Runtime job: load 20,000 agent logs from /logs into DuckDB."""
+    load(pages=20)
 
 if __name__ == "__main__":
     import sys
