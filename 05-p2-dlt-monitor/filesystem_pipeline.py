@@ -18,6 +18,8 @@ import dlt
 from dlt.sources import TDataItems
 from dlt.sources.filesystem import FileItemDict, filesystem
 
+from rest_api_post_sample import agent_output_source, make_payload
+
 HOME = str(Path.home())
 
 # agent name -> (bucket_url, file_glob). Claude-style layouts keep sessions
@@ -51,8 +53,8 @@ def raw_reader(agent: str):
 
     `write_disposition` and the table name travel with the resource (instead of
     being passed to `pipeline.run`), so the traces can be combined with other
-    sources (e.g. the POST sample) in a single run without run-level hints
-    overriding every resource's table.
+    sources (e.g. the REST API POST source) in a single run without run-level
+    hints overriding every resource's table.
     """
 
     @dlt.transformer(name=f"read_{agent}", write_disposition="replace")
@@ -95,39 +97,32 @@ def raw_reader(agent: str):
     return _read
 
 
-def build_resources(sample: bool = False):
+def build_resources():
     """One `filesystem | raw_reader` pipe per available agent log directory."""
     resources = []
     for agent, (bucket_url, file_glob) in SOURCES.items():
-        # skip local dirs that don't exist on this machine (e.g. ~/.zlaude)
-        path = urlparse(bucket_url).path
-        if bucket_url.startswith("file://") and not os.path.isdir(path):
-            print(f"skipping {agent}: {path} does not exist")
-            continue
         files = filesystem(
             bucket_url=bucket_url,
             file_glob=file_glob,
-            files_per_page=1 if sample else 100,
+            files_per_page=1,
         )
-        if sample:
-            files = files.add_limit(1)  # one file per source for a quick verify
+        
         resources.append(files | raw_reader(agent))
     return resources
 
 
 def load(
-    sample: bool = False,
     extra_resources: Optional[List] = None,
     dev_mode: bool = False,
 ) -> None:
     """Save the agent traces into the `logfire_data` dataset.
 
     Args:
-        sample: load only one file per source (quick verify).
-        extra_resources: additional dlt sources/resources (e.g. the POST sample
-            `agent_output_source`) to load AT THE SAME TIME, in a single
-            `pipeline.run`. Omit it to load only the traces — callers can then
-            run other pipelines CONSECUTIVELY on the same pipeline name.
+        extra_resources: additional dlt sources/resources (e.g. the REST API
+            POST source `agent_output_source`) to load AT THE SAME TIME, in a
+            single `pipeline.run`. Omit it to load only the traces — callers
+            can then run other pipelines CONSECUTIVELY on the same pipeline
+            name.
         dev_mode: opt-in throwaway dataset (`logfire_data_<ts>`) for
             experiments. Off by default so data lands in `logfire_data`.
     """
@@ -143,7 +138,7 @@ def load(
         dataset_name="logfire_data",
         dev_mode=dev_mode,
     )
-    resources = build_resources(sample=sample)
+    resources = build_resources()
     if extra_resources:
         # same time: one run for everything. No run-level table_name /
         # write_disposition here — those would override the per-resource
@@ -154,7 +149,28 @@ def load(
     print(pipeline.last_trace.last_normalize_info)
 
 
-if __name__ == "__main__":
-    import sys
+def save_agent_run(question: str, output: str, dev_mode: bool = False) -> None:
+    """Save a full agent run: the agent's answer + the session traces.
 
-    load(sample="--sample" in sys.argv)
+    POSTs `result.output` (from `faq_agent.run_sync(question, deps=deps)`)
+    via the REST API source (`agent_outputs` table) and loads the local
+    session traces (`log_records` table) in ONE `pipeline.run` — the pattern
+    from `rest_api_post_sample`:
+
+        pipeline.run(agent_output_source(make_payload(question, output)))
+
+    Args:
+        question: the question asked in `main.py`.
+        output: the agent's answer (`result.output`).
+        dev_mode: opt-in throwaway dataset (`logfire_data_<ts>`).
+
+    Requires the receiver API (`receiver_api.py`) on localhost:8787.
+    """
+    load(
+        extra_resources=[agent_output_source(make_payload(question, output))],
+        dev_mode=dev_mode,
+    )
+
+
+if __name__ == "__main__":
+    load()

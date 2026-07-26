@@ -2,5 +2,6 @@
 
 # from pipeline import my_pipeline
 # from notebook import my_notebook
+from rest_api_pipeline import ingest_logs
 
-__all__: list[str] = []
+__all__: list[str] = ["ingest_logs"]
