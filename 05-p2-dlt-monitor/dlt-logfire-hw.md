@@ -11,11 +11,14 @@ You'll need these accounts and tools:
 - A coding agent: Claude Code [`.claude`]
 - A [Logfire](https://logfire.dev) account
 - A dltHub Platform account (free): [app.dlthub.com](https://app.dlthub.com/)
-- [!NOTE] : for execute the files, make it from the path `~/llm-zoomcamp-code` with the `source .venv/bin/activate` (for Python)
 - For the homework, use the `~/llm-zoomcamp-code/05-p2-dlt-monitor/main.py`
-- [!NOTE] Requires the next `.env` with the values:
-    - `OPENAI_API_KEY` : rest API for the models.
-    - `LOGFIRE_TOKEN` & `LOGFIRE_READ_TOKEN` : from [Logfire](https://logfire.dev) for the project to write and read values.
+> [!IMPORTANT]
+> For execute the files, make it from the path `~/llm-zoomcamp-code` with the `source .venv/bin/activate` (for Python)
+
+> [!NOTE] 
+> Requires the next `.env` with the values:
+>    - `OPENAI_API_KEY` : rest API for the models.
+>    - `LOGFIRE_TOKEN` & `LOGFIRE_READ_TOKEN` : from [Logfire](https://logfire.dev) for the project to write and read values.
 
 # Question 1. Instrument the agent with Logfire
 For the following query
